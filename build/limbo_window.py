@@ -210,11 +210,17 @@ def main_menu():
     # 7) Keep a reference so it doesn’t get garbage‑collected
     image_label.image = bg_img
 
-    play_button = Button(root, text="Start", command=lambda: setup())
-    play_button.place(x=window_width // 2 - 100, y=window_height - 150)
+    play_button = Button(root, text="Start", font="Arial 20", command=lambda: setup())
+    play_button.place(x=window_width // 2 - 50, y=window_height - 160)
+
+    settings_button = Button(root, text="Settings", font="Arial 20", command=lambda: show_Settings())
+    settings_button.place(x=window_width // 2 + 50, y=window_height - 160)
 
     # 8) Run the GUI
     root.mainloop()
+
+def show_Settings():
+    print("Settings button clicked")
     
 def setup():
     global mgr
@@ -224,33 +230,42 @@ def setup():
     # Bring the keys to the correct position
     # mgr = KeyManager()
     delay = 2000  # milliseconds
-    width  = mgr.master.winfo_screenwidth()
-    height = mgr.master.winfo_screenheight()
+    if mgr:
+        width  = mgr.master.winfo_screenwidth()
+        height = mgr.master.winfo_screenheight()
+    else:
+        width  = 834
+        height = 495
     h_spacing = 100
     v_spacing = height // 8
 
-    w1 = mgr.open(1)
-    w2 = mgr.open(2)
-    w3 = mgr.open(3)
-    w4 = mgr.open(4)
-    w5 = mgr.open(5)
-    w6 = mgr.open(6)
-    w7 = mgr.open(7)
-    w8 = mgr.open(8)
+    if mgr:
+        w1 = mgr.open(1)
+        w2 = mgr.open(2)
+        w3 = mgr.open(3)
+        w4 = mgr.open(4)
+        w5 = mgr.open(5)
+        w6 = mgr.open(6)
+        w7 = mgr.open(7)
+        w8 = mgr.open(8)
+    else:
+        w1 = w2 = w3 = w4 = w5 = w6 = w7 = w8 = None
 
-    windowMove.moveWindowTo(w1.root, width - (h_spacing + 120) * 2, v_spacing, curve=True, overshoot=True)
-    windowMove.moveWindowTo(w2.root, width - (h_spacing + 120) * 1, v_spacing, curve=True, overshoot=True)
-    windowMove.moveWindowTo(w3.root, width - (h_spacing + 120) * 2, (v_spacing + 84) * 2 - 84, curve=True, overshoot=True)
-    windowMove.moveWindowTo(w4.root, width - (h_spacing + 120) * 1, (v_spacing + 84) * 2 - 84, curve=True, overshoot=True)
-    windowMove.moveWindowTo(w5.root, width - (h_spacing + 120) * 2, (v_spacing + 84) * 3 - 84, curve=True, overshoot=True)
-    windowMove.moveWindowTo(w6.root, width - (h_spacing + 120) * 1, (v_spacing + 84) * 3 - 84, curve=True, overshoot=True)
-    windowMove.moveWindowTo(w7.root, width - (h_spacing + 120) * 2, (v_spacing + 84) * 4 - 84, curve=True, overshoot=True)
-    windowMove.moveWindowTo(w8.root, width - (h_spacing + 120) * 1, (v_spacing + 84) * 4 - 84, curve=True, overshoot=True)
+    if any([w1, w2, w3, w4, w5, w6, w7, w8]):
+        windowMove.moveWindowTo(w1.root, width - (h_spacing + 120) * 2, v_spacing, curve=True, overshoot=True)
+        windowMove.moveWindowTo(w2.root, width - (h_spacing + 120) * 1, v_spacing, curve=True, overshoot=True)
+        windowMove.moveWindowTo(w3.root, width - (h_spacing + 120) * 2, (v_spacing + 84) * 2 - 84, curve=True, overshoot=True)
+        windowMove.moveWindowTo(w4.root, width - (h_spacing + 120) * 1, (v_spacing + 84) * 2 - 84, curve=True, overshoot=True)
+        windowMove.moveWindowTo(w5.root, width - (h_spacing + 120) * 2, (v_spacing + 84) * 3 - 84, curve=True, overshoot=True)
+        windowMove.moveWindowTo(w6.root, width - (h_spacing + 120) * 1, (v_spacing + 84) * 3 - 84, curve=True, overshoot=True)
+        windowMove.moveWindowTo(w7.root, width - (h_spacing + 120) * 2, (v_spacing + 84) * 4 - 84, curve=True, overshoot=True)
+        windowMove.moveWindowTo(w8.root, width - (h_spacing + 120) * 1, (v_spacing + 84) * 4 - 84, curve=True, overshoot=True)
 
-    mgr.master.after(delay, lambda: mgr.change_colour(correct_key, True))
-    mgr.master.after(delay + 800, lambda: mgr.change_colour(correct_key, False))
+    if mgr:
+        mgr.master.after(delay, lambda: mgr.change_colour(correct_key, True))
+        mgr.master.after(delay + 800, lambda: mgr.change_colour(correct_key, False))
 
-    mgr.master.mainloop()
+        mgr.master.mainloop()
 
 
 
