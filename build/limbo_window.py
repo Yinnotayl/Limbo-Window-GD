@@ -6,10 +6,6 @@ from PIL import Image, ImageTk, ImageEnhance
 
 # Limbo Keys Doc: https://docs.google.com/spreadsheets/d/1zGRkD6pMkz7yvzlwYg2tb1-4BmHRPXrFRVTGdXmcaVA/edit?gid=0#gid=0
 
-import os
-from tkinter import Toplevel, Label
-from PIL import Image, ImageTk
-
 class LimboWindow:
     # load once per process
     _base_img    = None
@@ -159,12 +155,75 @@ def demo():
     # kick off the mainloop once
     mgr.master.mainloop()
 
-
-correct_key = random.randint(1, 8)
-key_positions = [1, 2, 3, 4, 5, 6, 7, 8]
-def setup():
-    # Bring the keys to the correct position
+def main_menu():
+    global mgr
     mgr = KeyManager()
+    # 1) Create your window at the size you want
+    root = Tk()
+    root.title("Limbo Windows - by Yinnotayl")
+    window_width, window_height = 834, 495
+    root.geometry(f"{window_width}x{window_height}")
+    root.resizable(False, False)
+
+    def onClose():
+        global mgr
+        """Handle window close event."""
+        if mgr:
+            # Close all open windows
+            for key_id in list(mgr.windows.keys()):
+                mgr.close(key_id)
+            # Destroy the master window
+            mgr.master.destroy()
+            mgr = None
+        root.destroy()
+
+    root.protocol("WM_DELETE_WINDOW", onClose)
+
+    # 2) Force the window to realize its size
+    root.update_idletasks()
+
+    # 3) Load your source image
+    folder   = os.path.dirname(os.path.abspath(__file__))
+    img_path = os.path.join(folder, "limbo_logo.png")
+    pil_img  = Image.open(img_path).convert("RGBA")
+
+    # 4) Resize the image to exactly your window’s client area
+    #    (we already know window_width & window_height)
+    try:
+        resample_filter = Image.Resampling.LANCZOS
+    except AttributeError:
+        resample_filter = Image.LANCZOS
+
+    resized_img = pil_img.resize((window_width, window_height),
+                                 resample=resample_filter)
+
+    # 5) Convert it into a PhotoImage bound to our root
+    bg_img = ImageTk.PhotoImage(resized_img, master=root)
+
+    # 6) Display it in a Label at (0,0)
+    image_label = Label(root,
+                        image=bg_img,
+                        borderwidth=0,
+                        highlightthickness=0)
+    image_label.place(x=0, y=0)
+
+    # 7) Keep a reference so it doesn’t get garbage‑collected
+    image_label.image = bg_img
+
+    play_button = Button(root, text="Start", command=lambda: setup())
+    play_button.place(x=window_width // 2 - 100, y=window_height - 150)
+
+    # 8) Run the GUI
+    root.mainloop()
+    
+def setup():
+    global mgr
+    correct_key = random.randint(1, 8)
+    key_positions = [1, 2, 3, 4, 5, 6, 7, 8]
+
+    # Bring the keys to the correct position
+    # mgr = KeyManager()
+    delay = 2000  # milliseconds
     width  = mgr.master.winfo_screenwidth()
     height = mgr.master.winfo_screenheight()
     h_spacing = 100
@@ -188,11 +247,14 @@ def setup():
     windowMove.moveWindowTo(w7.root, width - (h_spacing + 120) * 2, (v_spacing + 84) * 4 - 84, curve=True, overshoot=True)
     windowMove.moveWindowTo(w8.root, width - (h_spacing + 120) * 1, (v_spacing + 84) * 4 - 84, curve=True, overshoot=True)
 
-    mgr.master.after(1000, lambda: mgr.change_colour(correct_key, True))
-    mgr.master.after(1800, lambda: mgr.change_colour(correct_key, False))
+    mgr.master.after(delay, lambda: mgr.change_colour(correct_key, True))
+    mgr.master.after(delay + 800, lambda: mgr.change_colour(correct_key, False))
 
     mgr.master.mainloop()
 
 
+
+
 if __name__ == "__main__":
+    main_menu()
     setup()
