@@ -188,9 +188,11 @@ class KeyManager:
         #                         on_complete=_move2)
 
 
-        windowMove.moveWindowTo(w1.root, x2, y2, curve=True, overshoot=True)
-        windowMove.moveWindowTo(w2.root, x1, y1, curve=True, overshoot=True,
-                                    on_complete=on_complete)
+        windowMove.moveWindowTo(w1.root, x2, y2, curve=True, overshoot=True, duration=500)
+        windowMove.moveWindowTo(w2.root, x1, y1, curve=True, overshoot=True, duration=500, 
+                                on_complete=on_complete)
+        
+        self.debug_maps()
 
     def move_key_to(self, key, new_pos, on_complete=None):
         """
@@ -214,9 +216,11 @@ class KeyManager:
 
         # animate
         x, y = xy_positions[new_pos]
-        windowMove.moveWindowTo(self.windows[key].root, x, y,
+        windowMove.moveWindowTo(self.windows[key].root, x, y, duration=500,
                                 curve=True, overshoot=True,
                                 on_complete=on_complete)
+        
+        self.debug_maps()
         
     def rotate_keys(self, positions, clockwise=True, on_complete=None):
         """Rotate keys in the given list of positions."""
@@ -239,7 +243,7 @@ class KeyManager:
                     window.after(0, on_complete)
             else:
                 # real move
-                windowMove.moveWindowTo(window, x, y,
+                windowMove.moveWindowTo(window, x, y, duration=500,
                                         curve=True, overshoot=True,
                                         on_complete=on_complete)
 
@@ -254,9 +258,7 @@ class KeyManager:
             # in rotate_keys, swap_keys, move_key_to...
             _safe_move(self.windows[key].root, x, y, cb)
 
-
-
-
+        self.debug_maps()
 
         # for pos, key in zip(positions, shifted_keys):
         #     if key is not None:
@@ -267,6 +269,10 @@ class KeyManager:
 
         #         x, y = xy_positions[pos]
         #         windowMove.moveWindowTo(self.windows[key].root, x, y, curve=True, overshoot=True, on_complete=on_complete)
+
+    def debug_maps(self):
+        print("pos_to_key:", self.pos_to_key)
+        print("key_to_pos:", self.key_to_pos)
 
 
 def demo():
@@ -383,35 +389,35 @@ def setup():
     # mgr = KeyManager()
     delay = 2000  # milliseconds
 
-    # if mgr:
-    #     w1 = mgr.open(1)
-    #     w2 = mgr.open(2)
-    #     w3 = mgr.open(3)
-    #     w4 = mgr.open(4)
-    #     w5 = mgr.open(5)
-    #     w6 = mgr.open(6)
-    #     w7 = mgr.open(7)
-    #     w8 = mgr.open(8)
-    # else:
-    #     w1 = w2 = w3 = w4 = w5 = w6 = w7 = w8 = None
+    if mgr:
+        w1 = mgr.open(1)
+        w2 = mgr.open(2)
+        w3 = mgr.open(3)
+        w4 = mgr.open(4)
+        w5 = mgr.open(5)
+        w6 = mgr.open(6)
+        w7 = mgr.open(7)
+        w8 = mgr.open(8)
+    else:
+        w1 = w2 = w3 = w4 = w5 = w6 = w7 = w8 = None
 
-    # if any([w1, w2, w3, w4, w5, w6, w7, w8]):
-    #     windowMove.moveWindowTo(w1.root, xy_positions[1][0], xy_positions[1][1], curve=True, overshoot=True)
-    #     windowMove.moveWindowTo(w2.root, xy_positions[2][0], xy_positions[2][1], curve=True, overshoot=True)
-    #     windowMove.moveWindowTo(w3.root, xy_positions[3][0], xy_positions[3][1], curve=True, overshoot=True)
-    #     windowMove.moveWindowTo(w4.root, xy_positions[4][0], xy_positions[4][1], curve=True, overshoot=True)
-    #     windowMove.moveWindowTo(w5.root, xy_positions[5][0], xy_positions[5][1], curve=True, overshoot=True)
-    #     windowMove.moveWindowTo(w6.root, xy_positions[6][0], xy_positions[6][1], curve=True, overshoot=True)
-    #     windowMove.moveWindowTo(w7.root, xy_positions[7][0], xy_positions[7][1], curve=True, overshoot=True)
-    #     windowMove.moveWindowTo(w8.root, xy_positions[8][0], xy_positions[8][1], curve=True, overshoot=True)
+    if any([w1, w2, w3, w4, w5, w6, w7, w8]):
+        windowMove.moveWindowTo(w1.root, xy_positions[1][0], xy_positions[1][1], curve=True, overshoot=True)
+        windowMove.moveWindowTo(w2.root, xy_positions[2][0], xy_positions[2][1], curve=True, overshoot=True)
+        windowMove.moveWindowTo(w3.root, xy_positions[3][0], xy_positions[3][1], curve=True, overshoot=True)
+        windowMove.moveWindowTo(w4.root, xy_positions[4][0], xy_positions[4][1], curve=True, overshoot=True)
+        windowMove.moveWindowTo(w5.root, xy_positions[5][0], xy_positions[5][1], curve=True, overshoot=True)
+        windowMove.moveWindowTo(w6.root, xy_positions[6][0], xy_positions[6][1], curve=True, overshoot=True)
+        windowMove.moveWindowTo(w7.root, xy_positions[7][0], xy_positions[7][1], curve=True, overshoot=True)
+        windowMove.moveWindowTo(w8.root, xy_positions[8][0], xy_positions[8][1], curve=True, overshoot=True)
 
-    # if mgr:
-    #     mgr.master.after(delay, lambda: mgr.change_colour(correct_key, True))
-    #     mgr.master.after(delay + 800, lambda: mgr.change_colour(correct_key, False))
+    if mgr:
+        mgr.master.after(delay, lambda: mgr.change_colour(correct_key, True))
+        mgr.master.after(delay + 800, lambda: mgr.change_colour(correct_key, False))
 
-    #     mgr.master.after(delay + 800 + 1000, lambda: game())
+        mgr.master.after(delay + 800 + 1000, lambda: game())
 
-    #     mgr.master.mainloop()
+        mgr.master.mainloop()
 
 class MovementsManager():
     def __init__(self, mgr):
@@ -557,6 +563,9 @@ def game():
     def run_next(i=0):
         if i == len(move_funcs):
             print("All 25 moves done.")
+            mgr.master.after(1000, lambda: mgr.change_colour(correct_key, True))
+            mgr.master.after(1000 + 800, lambda: mgr.change_colour(correct_key, False))
+            print("Shown")
             return
         cb = once(lambda: run_next(i+1))
         move_funcs[i](oncomplete=cb)
@@ -586,8 +595,7 @@ def game():
         windowMove.moveWindowTo(w7.root, xy_positions[7][0], xy_positions[7][1], curve=True, overshoot=True)
         windowMove.moveWindowTo(w8.root, xy_positions[8][0], xy_positions[8][1], curve=True, overshoot=True)
     windowMove.moveWindowTo(w1.root, xy_positions[1][0], xy_positions[1][1], curve=True, overshoot=True)
-    
-
+    print("movesd")
 
 
 if __name__ == "__main__":
