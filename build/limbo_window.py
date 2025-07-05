@@ -105,11 +105,15 @@ class LimboWindow:
 
 
 class KeyManager:
-    def __init__(self):
+    def __init__(self, move_duration=300, curve=True, overshoot=True):
         # one hidden root for all windows
         self.master = Tk()
         self.master.withdraw()
         self.windows = {}
+
+        self.move_duration = move_duration
+        self.curve = curve
+        self.overshoot = overshoot
 
         # 1) pre-create all 8 windows (hidden)
         for key_id in range(1, 9):
@@ -188,8 +192,8 @@ class KeyManager:
         #                         on_complete=_move2)
 
 
-        windowMove.moveWindowTo(w1.root, x2, y2, curve=True, overshoot=True, duration=500)
-        windowMove.moveWindowTo(w2.root, x1, y1, curve=True, overshoot=True, duration=500, 
+        windowMove.moveWindowTo(w1.root, x2, y2, curve=self.curve, overshoot=self.overshoot, duration=self.move_duration)
+        windowMove.moveWindowTo(w2.root, x1, y1, curve=self.curve, overshoot=self.overshoot, duration=self.move_duration, 
                                 on_complete=on_complete)
         
         self.debug_maps()
@@ -216,8 +220,8 @@ class KeyManager:
 
         # animate
         x, y = xy_positions[new_pos]
-        windowMove.moveWindowTo(self.windows[key].root, x, y, duration=500,
-                                curve=True, overshoot=True,
+        windowMove.moveWindowTo(self.windows[key].root, x, y, duration=self.move_duration,
+                                curve=self.curve, overshoot=self.overshoot,
                                 on_complete=on_complete)
         
         self.debug_maps()
@@ -227,12 +231,20 @@ class KeyManager:
         if not positions:
             return
 
+        # 1) Grab the current keys at each position
         keys = [self.pos_to_key.get(p) for p in positions]
 
+        # 2) Compute the new order
         if clockwise:
             shifted_keys = keys[-1:] + keys[:-1]  # Right shift
         else:
             shifted_keys = keys[1:] + keys[:1]   # Left shift
+
+        # 3) Update your maps in one go
+        for pos, key in zip(positions, shifted_keys):
+            if key is not None:
+                self.pos_to_key[pos] = key
+                self.key_to_pos[key] = pos
 
         def _safe_move(window, x, y, on_complete):
             # current coords
@@ -243,8 +255,8 @@ class KeyManager:
                     window.after(0, on_complete)
             else:
                 # real move
-                windowMove.moveWindowTo(window, x, y, duration=500,
-                                        curve=True, overshoot=True,
+                windowMove.moveWindowTo(window, x, y, duration=self.move_duration,
+                                        curve=self.curve, overshoot=self.overshoot,
                                         on_complete=on_complete)
 
         # inside KeyManager.rotate_keys (and analogously in swap_keys, splitRotate, etc)
@@ -289,40 +301,11 @@ def demo():
     # kick off the mainloop once
     mgr.master.mainloop()
 
-def main_menu():
-    global mgr
-    mgr = KeyManager()
-    # 1) Create your window at the size you want
-    root = Tk()
+def createWidgetsOnMain():
+    global window_height, window_width, bg_img, pil_img, image_label, play_button, settings_button, root, resized_img, sound_path, folder, img_path, resample_filter
     root.title("Limbo Windows - by Yinnotayl")
-    window_width, window_height = 834, 495
     root.geometry(f"{window_width}x{window_height}")
-    root.resizable(False, False)
 
-    def onClose():
-        global mgr
-        """Handle window close event."""
-        if mgr:
-            # Close all open windows
-            for key_id in list(mgr.windows.keys()):
-                mgr.close(key_id)
-            # Destroy the master window
-            mgr.master.destroy()
-            mgr = None
-        root.destroy()
-
-    root.protocol("WM_DELETE_WINDOW", onClose)
-
-    # 2) Force the window to realize its size
-    root.update_idletasks()
-
-    # 3) Load your source image
-    folder   = os.path.dirname(os.path.abspath(__file__))
-    img_path = os.path.join(folder, "limbo_logo.png")
-    pil_img  = Image.open(img_path).convert("RGBA")
-
-    # 4) Resize the image to exactly your window’s client area
-    #    (we already know window_width & window_height)
     try:
         resample_filter = Image.Resampling.LANCZOS
     except AttributeError:
@@ -349,6 +332,45 @@ def main_menu():
 
     settings_button = Button(root, text="Settings", font="Arial 20", command=lambda: show_Settings())
     settings_button.place(x=window_width // 2 + 50, y=window_height - 160)
+
+def main_menu():
+    global mgr, root, folder, img_path, pil_img, sound_path, window_width, window_height
+    mgr = KeyManager(move_duration=320, curve=True, overshoot=False)
+    # 1) Create your window at the size you want
+    root = Tk()
+    root.title("Limbo Windows - by Yinnotayl")
+    window_width, window_height = 834, 495
+    root.geometry(f"{window_width}x{window_height}")
+    root.resizable(False, False)
+
+    def onClose():
+        global mgr
+        """Handle window close event."""
+        if mgr:
+            # Close all open windows
+            for key_id in list(mgr.windows.keys()):
+                mgr.close(key_id)
+            # Destroy the master window
+            mgr.master.destroy()
+            mgr = None
+        root.destroy()
+
+    root.protocol("WM_DELETE_WINDOW", onClose)
+
+    # 2) Force the window to realize its size
+    root.update_idletasks()
+
+    # 3) Load your source image
+    folder     = os.path.dirname(os.path.abspath(__file__))
+    img_path   = os.path.join(folder, "limbo_logo.png")
+    pil_img    = Image.open(img_path).convert("RGBA")
+
+    # Loading the sound file
+    sound_path = os.path.join(folder, "limbo_music_audio.mp3")
+
+    # 4) Resize the image to exactly your window’s client area
+    #    (we already know window_width & window_height)
+    createWidgetsOnMain()
 
     # 8) Run the GUI
     root.mainloop()
@@ -384,10 +406,31 @@ def moveKeyToPosition(key, position):
     
 def setup():
     global mgr
+
+    # bail out if root was destroyed
+    if not getattr(root, "winfo_exists", lambda: False)():
+        print("setup(): root has been destroyed—nothing to do.")
+        return
+
+    # Resize and rearrange the main window's widgets
+    for item in root.winfo_children():
+        if item:
+            item.destroy()
+    root.geometry("300x300")
+    windowMove.moveWindowTo(root, 50, 50, curve=True, overshoot=True, duration=1000)
+    
+    audio_Label = Label(root, text="Audio: Isolation - NighHawk22", font="Arial 15")
+    audio_Label.pack()
+    audio_Bar = Scale(root, from_=0, to=100, orient=HORIZONTAL, length=250) # Non adjustable soundtrack time bar
+    audio_Bar.pack()
+    mute_button = Button(root, text="Mute", font="Arial 15", command=lambda: None)
+    mute_button.pack()
+    exit_button = Button(root, text="Exit", font="Arial 15", command=lambda: None)
+    exit_button.pack()
     
     # Bring the keys to the correct position
     # mgr = KeyManager()
-    delay = 2000  # milliseconds
+    delay = 1000  # milliseconds
 
     if mgr:
         w1 = mgr.open(1)
@@ -413,9 +456,9 @@ def setup():
 
     if mgr:
         mgr.master.after(delay, lambda: mgr.change_colour(correct_key, True))
-        mgr.master.after(delay + 800, lambda: mgr.change_colour(correct_key, False))
+        mgr.master.after(delay + 700, lambda: mgr.change_colour(correct_key, False))
 
-        mgr.master.after(delay + 800 + 1000, lambda: game())
+        mgr.master.after(delay + 700 + 700, lambda: game())
 
         mgr.master.mainloop()
 
@@ -545,8 +588,12 @@ def game():
     global mgr
     mm = MovementsManager(mgr)
 
-    # pick 25 random moves
-    move_funcs = [mm.moves[k] for k in random.choices(list(mm.moves), k=25)]
+    # 1) pick 25 random move‑IDs
+    move_keys = random.choices(list(mm.moves.keys()), k=25)
+    print("Move sequence:", move_keys)
+
+    # 2) build your functions list from those keys
+    move_funcs = [mm.moves[k] for k in move_keys]
 
     # helper that runs only once
     def once(fn):
@@ -565,7 +612,6 @@ def game():
             print("All 25 moves done.")
             mgr.master.after(1000, lambda: mgr.change_colour(correct_key, True))
             mgr.master.after(1000 + 800, lambda: mgr.change_colour(correct_key, False))
-            print("Shown")
             return
         cb = once(lambda: run_next(i+1))
         move_funcs[i](oncomplete=cb)
@@ -595,9 +641,7 @@ def game():
         windowMove.moveWindowTo(w7.root, xy_positions[7][0], xy_positions[7][1], curve=True, overshoot=True)
         windowMove.moveWindowTo(w8.root, xy_positions[8][0], xy_positions[8][1], curve=True, overshoot=True)
     windowMove.moveWindowTo(w1.root, xy_positions[1][0], xy_positions[1][1], curve=True, overshoot=True)
-    print("movesd")
 
 
 if __name__ == "__main__":
     main_menu()
-    setup()
